@@ -1,3 +1,4 @@
+import React, { useState } from "react";
 import {
   Box,
   Code,
@@ -6,13 +7,15 @@ import {
   Text,
   Spinner,
   Input,
+  Card,
 } from "@chakra-ui/react";
 import Button from "@ShortLinker/components/button";
+import { toastFail } from "@ShortLinker/components/toast";
 import {
   useFetchUrls,
   usePostCreateShortUrl,
 } from "@ShortLinker/services/dashboard";
-import React from "react";
+import { ShortLinker_colors } from "@ShortLinker/theme/colors";
 
 interface IUrlData {
   _id: string;
@@ -20,20 +23,37 @@ interface IUrlData {
   shortUrl: string;
   createdAt: string;
   updatedAt: string;
-  __v: number;
 }
 
 // ToDo: create reusable TextInput component setup react hook form with yup validation
 const LoginPage: React.FC = () => {
-  const { data: urlsData, isLoading, error } = useFetchUrls(); // Add isLoading and error handling
+  const [urlInput, setUrlInput] = useState("");
+
+  const { data: urlsData, isLoading, error } = useFetchUrls();
   const { mutateAsync: postCreateShortUrl, isPending: isCreatingShortUrl } =
     usePostCreateShortUrl();
 
-  const handleCreateShortUrl = async (url: string) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setUrlInput(e.target.value);
+  };
+
+  const handleCreateShortUrl = async () => {
+    if (!urlInput) {
+      toastFail("Please enter a URL");
+      return;
+    }
+
     const reqBody = {
-      originalUrl: url,
+      originalUrl: urlInput,
     };
+
     await postCreateShortUrl(reqBody);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      handleCreateShortUrl();
+    }
   };
 
   return (
@@ -82,23 +102,25 @@ const LoginPage: React.FC = () => {
       )}
 
       <Input
-        placeholder="https://fakeapi.platzi.com/en/rest/auth-jwt/"
-        isReadOnly
+        value={urlInput}
+        placeholder="Enter URL here"
         my={2}
+        onChange={handleInputChange}
+        onKeyDown={handleKeyDown}
       />
 
-      <Button
-        onClick={() =>
-          handleCreateShortUrl("https://fakeapi.platzi.com/en/rest/auth-jwt/")
-        }
-        colorScheme="teal"
-        p={4}
-        isLoading={isCreatingShortUrl}
-        isDisabled={isCreatingShortUrl}
-        width="100%"
-      >
-        Create Short URL
-      </Button>
+      <Card position={"sticky"} bottom={4} bg={ShortLinker_colors.body}>
+        <Button
+          onClick={() => handleCreateShortUrl()}
+          colorScheme="teal"
+          p={4}
+          isLoading={isCreatingShortUrl}
+          isDisabled={isCreatingShortUrl}
+          width="100%"
+        >
+          Create Short URL
+        </Button>
+      </Card>
     </Box>
   );
 };

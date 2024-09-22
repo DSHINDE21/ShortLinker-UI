@@ -1,7 +1,7 @@
 import axiosService from "@ShortLinker/services/service-axios";
 import { MyResponse } from "@ShortLinker/services/interface";
 import { api } from "@ShortLinker/services/service-api";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toastFail, toastSuccess } from "@ShortLinker/components/toast";
 import { ICreateShortUrlRequest } from "@ShortLinker/services/dashboard/interface";
 
@@ -23,11 +23,15 @@ const postCreateShortUrl = (requestBody: ICreateShortUrlRequest) => {
 };
 
 const usePostCreateShortUrl = () => {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: postCreateShortUrl,
     onSuccess: (success) => {
       if (success?.data?.success === 1) {
         toastSuccess(success?.data?.message);
+        queryClient.invalidateQueries({
+          queryKey: [api.urls],
+        });
       } else {
         toastFail(success?.data?.message);
       }
